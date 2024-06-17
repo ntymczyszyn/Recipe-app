@@ -1,5 +1,5 @@
 package com.example.recipeapp.data.entities
 
 enum class Unit {
-    GRAM, LITER, TABLESPOON, TEASPOON
+    TSP, TBS, CUP, L, ML, G, KG, OZ, LB, CAN, NONE
 }

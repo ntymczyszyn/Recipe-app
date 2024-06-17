@@ -68,15 +68,19 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("androidx.compose.runtime:runtime-livedata:1.6.4")
+    implementation("androidx.compose.runtime:runtime-livedata:1.5.1")
+    implementation("androidx.compose.ui:ui:1.5.1")
+    implementation("androidx.compose.runtime:runtime:1.5.1")
+    implementation("androidx.compose.material:material:1.5.1")
+    val material3_version = "1.0.0-alpha14"
+    implementation ("androidx.compose.material3:material3:$material3_version")
+    implementation ("androidx.navigation:navigation-compose:2.4.0-alpha10")
 
     val room_version = "2.6.1"
-
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
-
     // To use Kotlin annotation processing tool (kapt)
     kapt("androidx.room:room-compiler:$room_version")
 
-    implementation("androidx.compose.material:material:1.6.7")
+    implementation ("com.github.Breens-Mbaka:Searchable-Dropdown-Menu-Jetpack-Compose:0.2.4")
 }

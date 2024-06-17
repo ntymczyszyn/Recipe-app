@@ -16,9 +16,14 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url("https://jitpack.io") }
     }
 }
 
 rootProject.name = "RecipeApp"
 include(":app")
- 
+
+fun MavenArtifactRepository.url(s: String): MavenArtifactRepository? {
+    setUrl(s)
+    return this
+}
