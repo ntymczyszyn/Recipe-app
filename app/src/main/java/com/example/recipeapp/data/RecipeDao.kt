@@ -81,15 +81,16 @@ interface RecipeDao {
     @Query("SELECT * FROM Tag INNER JOIN RecipeTagCrossRef ON Tag.id = RecipeTagCrossRef.tagId WHERE RecipeTagCrossRef.recipeId = :recipeId")
     suspend fun getTagsForRecipe(recipeId: Int): List<Tag>
 
-    // get tag by name
     @Query("SELECT * FROM Tag WHERE name = :name")
     suspend fun getTagByName(name: String): Tag?
     @Delete
     suspend fun deleteRecipeTagCrossRef(recipeTagCrossRef: RecipeTagCrossRef)
     @Delete
     suspend fun deleteRecipeIngredientCrossRef(recipeIngredientCrossRef: RecipeIngredientCrossRef)
-    // get ingredient for ceratin recipie
     @Transaction
     @Query("SELECT * FROM Ingredient WHERE id IN (SELECT ingredientId FROM RecipeIngredientCrossRef WHERE recipeId = :recipeId)")
     suspend fun getIngredientsForRecipe(recipeId: Int): List<Ingredient>
+
+    @Query("SELECT * FROM Ingredient WHERE name = :name")
+    suspend fun getIngredientsByName(name: String): List<Ingredient>
 }

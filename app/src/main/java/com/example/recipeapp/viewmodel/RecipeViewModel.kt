@@ -24,10 +24,18 @@ class RecipeViewModel : ViewModel() {
     fun addRecipeWithIngredientsAndTags(title: String, instructions: String, multiplier: Float, ingredients: List<Ingredient>, tags: List<Tag>) {
         viewModelScope.launch(Dispatchers.IO) {
             val recipeId = recipeDao.insertRecipe(Recipe(title = title, instructions = instructions, multiplier = multiplier)).toInt()
+
             ingredients.forEach { ingredient ->
-                val ingredientId = recipeDao.insertIngredient(ingredient).toInt()
+                val existingIngredients = recipeDao.getIngredientsByName(ingredient.name)
+                val matchingIngredient = existingIngredients.find { it.isSameAs(ingredient) }
+                val ingredientId = if (matchingIngredient != null) {
+                    matchingIngredient.id
+                } else {
+                    recipeDao.insertIngredient(ingredient).toInt()
+                }
                 recipeDao.insertRecipeIngredientCrossRef(RecipeIngredientCrossRef(recipeId, ingredientId))
             }
+
             tags.forEach { tag ->
                 val existingTag = recipeDao.getTagByName(tag.name)
                 val tagId = if (existingTag != null) {
@@ -40,6 +48,7 @@ class RecipeViewModel : ViewModel() {
         }
     }
 
+
     // TAG
     fun addTag(tag: Tag) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -51,6 +60,11 @@ class RecipeViewModel : ViewModel() {
             }
         }
     }
+    fun updateTag(tag: Tag) {
+        viewModelScope.launch(Dispatchers.IO) {
+            recipeDao.updateTag(tag)
+        }
+    }
 
     fun deleteTag(tag: Tag) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -58,24 +72,18 @@ class RecipeViewModel : ViewModel() {
         }
     }
 
-    fun updateTag(tag: Tag) {
-        viewModelScope.launch(Dispatchers.IO) {
-            recipeDao.updateTag(tag)
-        }
-    }
-
-    fun addTagToRecipe(recipeId: Int, tag: Tag) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val existingTagsForRecipe = recipeDao.getTagsForRecipe(recipeId)
-            val tagId = recipeDao.getTagByName(tag.name)?.id ?: recipeDao.insertTag(tag).toInt()
-
-            if (existingTagsForRecipe.any { it.name == tag.name }) {
-                showErrorDialog.postValue(true)
-            } else {
-                recipeDao.insertRecipeTagCrossRef(RecipeTagCrossRef(recipeId, tagId))
-            }
-        }
-    }
+//    fun addTagToRecipe(recipeId: Int, tag: Tag) {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            val existingTagsForRecipe = recipeDao.getTagsForRecipe(recipeId)
+//            val tagId = recipeDao.getTagByName(tag.name)?.id ?: recipeDao.insertTag(tag).toInt()
+//
+//            if (existingTagsForRecipe.any { it.name == tag.name }) {
+//                showErrorDialog.postValue(true)
+//            } else {
+//                recipeDao.insertRecipeTagCrossRef(RecipeTagCrossRef(recipeId, tagId))
+//            }
+//        }
+//    }
 
 
     // RECIPE
@@ -95,21 +103,17 @@ class RecipeViewModel : ViewModel() {
         }
     }
 
-//    fun Ingredient.isSameAs(other: Ingredient): Boolean {
-//        return this.name == other.name && this.quantity == other.quantity && this.unit == other.unit
-//    }
-
     fun deleteRecipe(recipe: Recipe) {
         viewModelScope.launch(Dispatchers.IO) {
             recipeDao.deleteRecipe(recipe)
         }
     }
 
-    fun updateRecipe(recipe: Recipe) {
-        viewModelScope.launch(Dispatchers.IO) {
-            recipeDao.updateRecipe(recipe)
-        }
-    }
+//    fun updateRecipe(recipe: Recipe) {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            recipeDao.updateRecipe(recipe)
+//        }
+//    }
 
     // INGREDIENT
     fun addIngredient(ingredient: Ingredient) {
@@ -123,17 +127,18 @@ class RecipeViewModel : ViewModel() {
         }
     }
 
+    fun updateIngredient(ingredient: Ingredient) {
+        viewModelScope.launch(Dispatchers.IO) {
+            recipeDao.updateIngredient(ingredient)
+        }
+    }
+
     fun deleteIngredient(ingredient: Ingredient) {
         viewModelScope.launch(Dispatchers.IO) {
             recipeDao.deleteIngredient(ingredient)
         }
     }
 
-    fun updateIngredient(ingredient: Ingredient) {
-        viewModelScope.launch(Dispatchers.IO) {
-            recipeDao.updateIngredient(ingredient)
-        }
-    }
 
     fun getRecipeWithDetails(recipeId: Int): LiveData<RecipeWithDetails> {
         return recipeDao.getRecipeWithDetailsById(recipeId)

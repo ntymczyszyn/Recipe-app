@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +20,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.List
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -65,29 +71,33 @@ fun AppNavigator(recipeViewModel: RecipeViewModel) {
 
 @Composable
 fun BottomBar(navController: NavHostController) {
-    BottomNavigation {
+    BottomNavigation(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(70.dp) // Zwiększamy wysokość paska nawigacyjnego
+    ) {
         BottomNavigationItem(
             icon = { Icon(Icons.Default.List, contentDescription = "Recipe List") },
-            label = { Text("Recipe List") },
-            selected = true,
+            label = { Text("Recipe List", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+            selected = navController.currentDestination?.route == MainActivity.Screen.RecipeList.route,
             onClick = { navController.navigate(MainActivity.Screen.RecipeList.route) }
         )
         BottomNavigationItem(
             icon = { Icon(Icons.Default.Add, contentDescription = "Add Recipe") },
-            label = { Text("Add Recipe") },
-            selected = false,
+            label = { Text("Add Recipe", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+            selected = navController.currentDestination?.route == MainActivity.Screen.AddRecipe.route,
             onClick = { navController.navigate(MainActivity.Screen.AddRecipe.route) }
         )
         BottomNavigationItem(
-            icon = { Icon(Icons.Default.List, contentDescription = "Ingriedient List") },
-            label = { Text("Ingriedient List") },
-            selected = true,
+            icon = { Icon(Icons.Default.List, contentDescription = "Ingredient List") },
+            label = { Text("Ingredient List", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+            selected = navController.currentDestination?.route == MainActivity.Screen.IngriedientList.route,
             onClick = { navController.navigate(MainActivity.Screen.IngriedientList.route) }
         )
         BottomNavigationItem(
             icon = { Icon(Icons.Default.List, contentDescription = "Tag List") },
-            label = { Text("Tag List") },
-            selected = true,
+            label = { Text("Tag List", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+            selected = navController.currentDestination?.route == MainActivity.Screen.TagList.route,
             onClick = { navController.navigate(MainActivity.Screen.TagList.route) }
         )
     }
@@ -108,7 +118,6 @@ fun RecipeListScreen(navController: NavHostController,recipeViewModel: RecipeVie
             EditRecipeScreen(
                 recipeWithDetails = selectedRecipe!!,
                 onSave = {
-                    //recipeViewModel.updateRecipe(it.recipe, it.ingredients, it.tags)
                     selectedRecipe = null
                     isEditing = false
                 },
@@ -127,7 +136,12 @@ fun RecipeListScreen(navController: NavHostController,recipeViewModel: RecipeVie
                 }
             )
         } else {
-            LazyColumn {
+            LazyColumn(modifier = Modifier.padding(
+                start = 8.dp,
+                top = 8.dp,
+                end = 8.dp,
+                bottom = 70.dp
+            ))  {
                 items(recipes) { recipeWithDetails ->
                     RecipeItem(
                         recipeWithDetails,
@@ -140,7 +154,7 @@ fun RecipeListScreen(navController: NavHostController,recipeViewModel: RecipeVie
                             isEditing = true
                         },
                         onDelete = {
-                            recipeViewModel.deleteRecipe(recipeWithDetails.recipe)
+                            recipeViewModel.deleteRecipe(recipeWithDetails.recipe) // TODO : popraw na usuwanie z details recipie
                         }
                     )
                 }
@@ -148,37 +162,3 @@ fun RecipeListScreen(navController: NavHostController,recipeViewModel: RecipeVie
         }
     }
 }
-
-//
-//@Composable
-//fun RecipeApp(recipeViewModel: RecipeViewModel) {
-//    val recipes by recipeViewModel.recipeList.observeAsState(emptyList())
-//    var title by remember { mutableStateOf("") }
-//    var instructions by remember { mutableStateOf("") }
-//
-//    Column(modifier = Modifier.padding(16.dp)) {
-//        OutlinedTextField(
-//            value = title,
-//            onValueChange = { title = it },
-//            label = { Text("Title") }
-//        )
-//        OutlinedTextField(
-//            value = instructions,
-//            onValueChange = { instructions = it },
-//            label = { Text("Instructions") }
-//        )
-//        Button(onClick = {
-//            recipeViewModel.addRecipeWithIngredients(title, instructions, 1.0f, emptyList())
-//        }) {
-//            Text("Add Recipe")
-//        }
-//        Spacer(modifier = Modifier.height(16.dp))
-//        LazyColumn {
-//            items(recipes) { recipeWithDetails ->
-//                Text(recipeWithDetails.recipe.title)
-//                Text(recipeWithDetails.recipe.instructions)
-//            }
-//        }
-//    }
-
-//}

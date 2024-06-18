@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
@@ -43,7 +42,7 @@ import com.example.recipeapp.data.entities.*
 import com.example.recipeapp.data.entities.Unit
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) {
+fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) { // po naisneicu che miec przyciski doe dycki danego tagu
     val ingredients by recipeViewModel.allIngredients.observeAsState(emptyList())
     var showEditIngredientDialog by remember { mutableStateOf(false) }
     var ingredientToEdit by remember { mutableStateOf(Ingredient()) }
@@ -51,7 +50,12 @@ fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: Reci
     Scaffold(
         bottomBar = { BottomBar(navController) }
     ) {
-        LazyColumn {
+        LazyColumn (modifier = Modifier.padding(
+            start = 16.dp,
+            top = 16.dp,
+            end = 16.dp,
+            bottom = 70.dp
+        )) {
             items(ingredients) { ingredient ->
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -68,7 +72,7 @@ fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: Reci
                     }) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit Ingredient")
                     }
-                    IconButton(onClick = { recipeViewModel.deleteIngredient(ingredient) }) {
+                    IconButton(onClick = { recipeViewModel.deleteIngredient(ingredient) }) { // TODO: zabezpiecz przed suuwanie
                         Icon(Icons.Default.Delete, contentDescription = "Delete Ingredient")
                     }
                 }
@@ -88,86 +92,6 @@ fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: Reci
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
-@Composable
-fun AllTagsScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) {
-    val tags by recipeViewModel.allTags.observeAsState(emptyList())
-    var expanded by remember { mutableStateOf(false) }
-    var selectedTag by remember { mutableStateOf(Tag()) }
-    var showEditTagDialog by remember { mutableStateOf(false) }
-    val recipesByTag by recipeViewModel.getRecipesForTag(selectedTag).observeAsState(emptyList())
-
-    Scaffold(
-        bottomBar = { BottomBar(navController) }
-    ) {
-        Column {
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = selectedTag.name,
-                    onValueChange = { },
-                    readOnly = true,
-                    label = { Text("Tag") },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.ArrowDropDown,
-                            contentDescription = null
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                        .clickable { expanded = !expanded }
-                )
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    tags.forEach { tag ->
-                        DropdownMenuItem(
-                            onClick = {
-                                selectedTag = tag
-                                expanded = false
-                            }
-                        ) {
-                            Text(text = tag.name)
-                        }
-                    }
-                }
-            }
-            if (selectedTag.name.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    IconButton(onClick = { showEditTagDialog = true }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit Tag")
-                    }
-                    IconButton(onClick = { recipeViewModel.deleteTagFromAllRecipes(selectedTag) }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete Tag")
-                    }
-                }
-                LazyColumn {
-                    items(recipesByTag) { recipe ->
-                        Text(text = recipe.recipe.title)
-                    }
-                }
-            }
-        }
-    }
-
-    if (showEditTagDialog) {
-        EditTagDialog(
-            tag = selectedTag,
-            viewModel = recipeViewModel,
-            onEdit = {
-                showEditTagDialog = false
-            },
-            onDismiss = { showEditTagDialog = false },
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -256,40 +180,3 @@ fun EditIngredientDialog(
     )
 }
 
-@Composable
-fun EditTagDialog(
-    tag: Tag,
-    viewModel: RecipeViewModel,
-    onEdit: () -> kotlin.Unit,
-    onDismiss: () -> kotlin.Unit
-) {
-    var tagName by remember { mutableStateOf(tag.name) }
-
-    AlertDialog(
-        onDismissRequest = { onDismiss() },
-        title = { Text("Edit Tag") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = tagName,
-                    onValueChange = { tagName = it },
-                    label = { Text("Tag Name") }
-                )
-            }
-        },
-        confirmButton = {
-            Button(onClick = {
-                val editedTag = tag.copy(name = tagName)
-                viewModel.updateTag(editedTag)
-                onEdit()
-            }) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            Button(onClick = { onDismiss() }) {
-                Text("Cancel")
-            }
-        }
-    )
-}
