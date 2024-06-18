@@ -1,6 +1,7 @@
 package com.example.recipeapp
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -10,9 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Card
 import androidx.compose.material.DropdownMenu
@@ -22,9 +21,7 @@ import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -39,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.example.recipeapp.data.entities.Ingredient
 import com.example.recipeapp.data.entities.RecipeWithDetails
@@ -48,20 +44,26 @@ import com.example.recipeapp.viewmodel.RecipeViewModel
 import com.example.recipeapp.data.entities.Unit
 import com.kanyidev.searchable_dropdown.SearchableExpandedDropDownMenu
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun RecipeItem(recipeWithDetails: RecipeWithDetails, onClick: () -> kotlin.Unit, onEdit: () -> kotlin.Unit, onDelete: () -> kotlin.Unit){
+fun RecipeItem(
+    recipeWithDetails: RecipeWithDetails,
+    onClick: () -> kotlin.Unit,
+    onEdit: () -> kotlin.Unit,
+    onDelete: () -> kotlin.Unit
+) {
     var showButtons by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 8.dp)
+            .padding(vertical = 8.dp, horizontal = 4.dp)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onClick() },
@@ -79,17 +81,22 @@ fun RecipeItem(recipeWithDetails: RecipeWithDetails, onClick: () -> kotlin.Unit,
                 text = recipeWithDetails.recipe.title,
                 style = MaterialTheme.typography.h6
             )
-            if (showButtons) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Button(onClick = { onEdit() }) {
-                        Text("Edit")
+            AnimatedVisibility(visible = showButtons) {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        IconButton(onClick = { onEdit() }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        }
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        }
                     }
-                    Button(onClick = { showDeleteDialog = true }) {
-                        Text("Delete")
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -116,47 +123,46 @@ fun RecipeItem(recipeWithDetails: RecipeWithDetails, onClick: () -> kotlin.Unit,
     }
 }
 
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun RecipeDetailScreen(recipeWithDetails: RecipeWithDetails, onBack: () -> kotlin.Unit) {
     var quantityMultiplier by remember { mutableStateOf(1f) }
     var expanded by remember { mutableStateOf(false) }
     val multipliers = listOf(0.5f,1f,1.5f, 2f, 2.5f, 3f, 3.5f, 4f, 4.5f, 5f)
-    LazyColumn(modifier = Modifier.padding(
-        start = 16.dp,
-        top = 16.dp,
-        end = 16.dp,
-        bottom = 70.dp
-    )) { item {
-        Text(recipeWithDetails.recipe.title)
+    LazyColumn(modifier = Modifier
+        .padding(
+            start = 16.dp,
+            top = 16.dp,
+            end = 16.dp,
+            bottom = 70.dp
+        )
+        .height(750.dp)) { item {
+        Text(recipeWithDetails.recipe.title, style = MaterialTheme.typography.h6)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = recipeWithDetails.recipe.instructions,
             style = MaterialTheme.typography.body1
         )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(text = "Ingredients", fontSize = 17.sp)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Ingredients:",
-            style = MaterialTheme.typography.h6
-        )
         recipeWithDetails.ingredients.forEach { ingredient ->
             Text(
                 text = "${ingredient.name} - ${ingredient.quantity * quantityMultiplier} ${ingredient.unit}",
                 style = MaterialTheme.typography.body2
             )
         }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(text = "Tags", fontSize = 17.sp)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Tags:",
-            style = MaterialTheme.typography.h6
-        )
         recipeWithDetails.tags.forEach { tag ->
             Text(
                 text = tag.name,
                 style = MaterialTheme.typography.body2
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
@@ -172,7 +178,8 @@ fun RecipeDetailScreen(recipeWithDetails: RecipeWithDetails, onBack: () -> kotli
                         contentDescription = null
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .clickable { expanded = !expanded }
             )
             DropdownMenu(
@@ -191,7 +198,7 @@ fun RecipeDetailScreen(recipeWithDetails: RecipeWithDetails, onBack: () -> kotli
                 }
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(15.dp))
         Button(onClick = { onBack() }) {
             Text("Back to list")
         }
@@ -201,7 +208,7 @@ fun RecipeDetailScreen(recipeWithDetails: RecipeWithDetails, onBack: () -> kotli
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AddRecipeScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) { // TODO porawi ingrients i tags jakk w edit
+fun AddRecipeScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) {
     var title by remember { mutableStateOf("") }
     var instructions by remember { mutableStateOf("") }
     var ingredients by remember { mutableStateOf(listOf<Ingredient>()) }
@@ -222,103 +229,119 @@ fun AddRecipeScreen(navController: NavHostController, recipeViewModel: RecipeVie
                 )) {
                     item {
                         OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
                             value = title,
                             onValueChange = { title = it },
                             label = { Text("Title") }
                         )
                         OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
                             value = instructions,
                             onValueChange = { instructions = it },
                             label = { Text("Instructions") }
                         )
-
-                        Text("Ingredients:")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Ingredients", fontSize = 17.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
                         ingredients.forEachIndexed { index, ingredient ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(40.dp),
+                                elevation = 2.dp
                             ) {
-                                Text("${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}")
-                                IconButton(onClick = {
-                                    ingredients = ingredients.toMutableList().also { it.removeAt(index) }
-                                }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Remove Ingredient")
-                                }
-                            }
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Button(onClick = { showAddIngredientDialog = true }) {
-                                Text("Add new ingredient")
-                            }
-                            SearchableExpandedDropDownMenu(
-                                listOfItems = allIngredients.map { "${it.name} - ${it.quantity} ${it.unit}" },
-                                modifier = Modifier.fillMaxWidth(),
-                                onDropDownItemSelected = { item ->
-                                    val selectedIngredient = allIngredients.firstOrNull {
-                                        "${it.name} - ${it.quantity} ${it.unit}" == item
-                                    }
-                                    if (selectedIngredient != null) {
-                                        if (ingredients.none { it.isSameAs(selectedIngredient) }) {
-                                            ingredients = ingredients + selectedIngredient
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}")
+                                    IconButton(
+                                        onClick = {
+                                            ingredients = ingredients.toMutableList().also { it.removeAt(index) }
                                         }
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = "Remove Ingredient")
                                     }
-                                },
-                                enable = true,
-                                placeholder = "Select existing ingredient",
-                                parentTextFieldCornerRadius = 12.dp,
-                                colors = TextFieldDefaults.outlinedTextFieldColors(),
-                                dropdownItem = { name ->
-                                    Text(name)
                                 }
-                            )
+                            }
+                            Spacer(modifier =   Modifier.height(8.dp))
                         }
-
-                        Text("Tags:")
+                        Button(onClick = { showAddIngredientDialog = true }) {
+                            Text("Add new ingredient")
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SearchableExpandedDropDownMenu(
+                            listOfItems = allIngredients.map { "${it.name} - ${it.quantity} ${it.unit}" },
+                            modifier = Modifier.fillMaxWidth(),
+                            onDropDownItemSelected = { item ->
+                                val selectedIngredient = allIngredients.firstOrNull {
+                                    "${it.name} - ${it.quantity} ${it.unit}" == item
+                                }
+                                if (selectedIngredient != null) {
+                                    if (ingredients.none { it.isSameAs(selectedIngredient) }) {
+                                        ingredients = ingredients + selectedIngredient
+                                    }
+                                }
+                            },
+                            placeholder = "Select existing ingredient",
+                            dropdownItem = { name ->
+                                Text(name)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Tags", fontSize = 17.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
                         tags.forEachIndexed { index, tag ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(40.dp),
+                                elevation = 2.dp
                             ) {
-                                Text(tag.name)
-                                IconButton(onClick = {
-                                    tags = tags.toMutableList().also { it.removeAt(index) }
-                                }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Remove Tag")
-                                }
-                            }
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Button(onClick = { showAddTagDialog = true }) {
-                                Text("Add Tag")
-                            }
-
-                            SearchableExpandedDropDownMenu(
-                                listOfItems = allTags.map { it.name },
-                                modifier = Modifier.fillMaxWidth(),
-                                onDropDownItemSelected = { item ->
-                                    val selectedTag = allTags.firstOrNull { it.name == item }
-                                    if (selectedTag != null) {
-                                        if (tags.none { it.name == selectedTag.name }) {
-                                            tags = tags + selectedTag
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(tag.name)
+                                    IconButton(
+                                        onClick = {
+                                            tags = tags.toMutableList().also { it.removeAt(index) }
                                         }
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = "Remove Tag")
                                     }
-                                },
-                                enable = true,
-                                placeholder = "Select existing tag",
-                                parentTextFieldCornerRadius = 12.dp,
-                                colors = TextFieldDefaults.outlinedTextFieldColors(),
-                                dropdownItem = { name ->
-                                    Text(name)
                                 }
-                            )
+                            }
+                            Spacer(modifier =   Modifier.height(8.dp))
                         }
-
+                        Button(onClick = { showAddTagDialog = true }) {
+                            Text("Add Tag")
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SearchableExpandedDropDownMenu(
+                            listOfItems = allTags.map { it.name },
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            onDropDownItemSelected = { item ->
+                                val selectedTag = allTags.firstOrNull { it.name == item }
+                                if (selectedTag != null) {
+                                    if (tags.none { it.name == selectedTag.name }) {
+                                        tags = tags + selectedTag
+                                    }
+                                }
+                            },
+                            placeholder = "Select existing tag",
+                            dropdownItem = { name ->
+                                Text(name)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
                         Button(onClick = {
                             recipeViewModel.addRecipeWithIngredientsAndTags(
                                 title,
@@ -364,9 +387,8 @@ fun AddRecipeScreen(navController: NavHostController, recipeViewModel: RecipeVie
     }
 }
 
-
 @Composable
-fun EditRecipeScreen(  // TODO poraw tags
+fun EditRecipeScreen(
     recipeWithDetails: RecipeWithDetails,
     onSave: () -> kotlin.Unit,
     onCancel: () -> kotlin.Unit,
@@ -382,37 +404,41 @@ fun EditRecipeScreen(  // TODO poraw tags
     val allIngredients by recipeViewModel.allIngredients.observeAsState(emptyList())
     val allTags by recipeViewModel.allTags.observeAsState(emptyList())
 
-    LazyColumn(modifier = Modifier.padding(
-        start = 16.dp,
-        top = 16.dp,
-        end = 16.dp,
-        bottom = 70.dp
-    )) { item {
+    LazyColumn(modifier = Modifier
+        .padding(
+            start = 16.dp,
+            top = 16.dp,
+            end = 16.dp,
+            bottom = 70.dp
+        )
+        .height(750.dp)) { item {
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
-            label = { Text("Title") }
+            label = { Text("Title") },
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(10.dp))
         OutlinedTextField(
             value = instructions,
             onValueChange = { instructions = it },
-            label = { Text("Instructions") }
+            label = { Text("Instructions") },
+            modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text("Ingredients")
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Ingredients", fontSize = 17.sp)
+        Spacer(modifier = Modifier.height(8.dp))
         ingredients.forEachIndexed { index, ingredient ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(40.dp),
-                elevation = 4.dp
+                elevation = 2.dp
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
+                        .padding(6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -426,12 +452,13 @@ fun EditRecipeScreen(  // TODO poraw tags
                     }
                 }
             }
+            Spacer(modifier =   Modifier.height(8.dp))
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { showAddIngredientDialog = true }) {
             Text("Add new ingredient")
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         SearchableExpandedDropDownMenu(
             listOfItems = allIngredients.map { "${it.name} - ${it.quantity} ${it.unit}" },
             modifier = Modifier.fillMaxWidth(),
@@ -445,59 +472,61 @@ fun EditRecipeScreen(  // TODO poraw tags
                     }
                 }
             },
-            enable = true,
             placeholder = "Select existing ingredient",
-            parentTextFieldCornerRadius = 12.dp,
-            colors = TextFieldDefaults.outlinedTextFieldColors(),
             dropdownItem = { name ->
                 Text(name)
             }
         )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text("Tags")
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Tags", fontSize = 17.sp)
+        Spacer(modifier = Modifier.height(8.dp))
         tags.forEachIndexed { index, tag ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+                elevation = 2.dp
             ) {
-                Text(tag.name)
-                IconButton(onClick = {
-                    tags = tags.toMutableList().also { it.removeAt(index) }
-                }) {
-                    Icon(Icons.Default.Close, contentDescription = "Remove Tag")
-                }
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(onClick = { showAddTagDialog = true }) {
-                Text("Add Tag")
-            }
-
-            SearchableExpandedDropDownMenu(
-                listOfItems = allTags.map { it.name },
-                modifier = Modifier.fillMaxWidth(),
-                onDropDownItemSelected = { item ->
-                    val selectedTag = allTags.firstOrNull { it.name == item }
-                    if (selectedTag != null) {
-                        if (tags.none { it.name == selectedTag.name }) {
-                            tags = tags + selectedTag
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(tag.name)
+                    IconButton(
+                        onClick = {
+                            tags = tags.toMutableList().also { it.removeAt(index) }
                         }
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Remove Tag")
                     }
-                },
-                enable = true,
-                placeholder = "Select existing tag",
-                parentTextFieldCornerRadius = 12.dp,
-                colors = TextFieldDefaults.outlinedTextFieldColors(),
-                dropdownItem = { name ->
-                    Text(name)
                 }
-            )
+            }
+            Spacer(modifier =   Modifier.height(8.dp))
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Button(onClick = { showAddTagDialog = true }) {
+            Text("Add Tag")
+        }
+        Spacer(modifier =   Modifier.height(4.dp))
+        SearchableExpandedDropDownMenu(
+            listOfItems = allTags.map { it.name },
+            modifier = Modifier.fillMaxWidth(),
+            onDropDownItemSelected = { item ->
+                val selectedTag = allTags.firstOrNull { it.name == item }
+                if (selectedTag != null) {
+                    if (tags.none { it.name == selectedTag.name }) {
+                        tags = tags + selectedTag
+                    }
+                }
+            },
+            placeholder = "Select existing tag",
+            dropdownItem = { name ->
+                Text(name)
+            }
+        )
+        Spacer(modifier = Modifier.height(20.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -505,7 +534,7 @@ fun EditRecipeScreen(  // TODO poraw tags
             Button(onClick = {
                 val updatedRecipe =
                     recipeWithDetails.recipe.copy(title = title, instructions = instructions)
-                recipeViewModel.updateRecipe(updatedRecipe, ingredients, tags)
+                recipeViewModel.updateRecipeWithIngredientsAndTags(updatedRecipe, ingredients, tags)
                 onSave()
             }) {
                 Text("Save")
@@ -553,61 +582,61 @@ fun AddIngredientDialog(
     onDismiss: () -> kotlin.Unit,
     viewModel: RecipeViewModel
 ) {
-    var ingredientName by remember { mutableStateOf("") }
-    var ingredientQuantity by remember { mutableStateOf("") }
+    var ingredientName by remember { mutableStateOf("name") }
+    var ingredientQuantity by remember { mutableStateOf("1") }
     var selectedUnit by remember { mutableStateOf(Unit.G) }
     var expanded by remember { mutableStateOf(false) }
     val units = Unit.values()
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
-        title = { Text("Add Ingredient") },
         text = {
             Column {
-                OutlinedTextField(
-                    value = ingredientName,
-                    onValueChange = { ingredientName = it },
-                    label = { Text("Ingredient Name") }
-                )
-                OutlinedTextField(
-                    value = ingredientQuantity,
-                    onValueChange = { ingredientQuantity = it },
-                    label = { Text("Ingredient Quantity") }
-                )
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
                     OutlinedTextField(
-                        value = selectedUnit.name,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Unit") },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.ArrowDropDown,
-                                contentDescription = null
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                            .clickable { expanded = !expanded }
+                        value = ingredientName,
+                        onValueChange = { ingredientName = it },
+                        label = { Text("Ingredient Name") }
                     )
-                    DropdownMenu(
+                    OutlinedTextField(
+                        value = ingredientQuantity,
+                        onValueChange = { ingredientQuantity = it },
+                        label = { Text("Ingredient Quantity") }
+                    )
+                    ExposedDropdownMenuBox(
                         expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                        onExpandedChange = { expanded = !expanded }
                     ) {
-                        units.forEach { unit ->
-                            DropdownMenuItem(
-                                onClick = {
-                                    selectedUnit = unit
-                                    expanded = false
+                        OutlinedTextField(
+                            value = selectedUnit.name,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Unit") },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.ArrowDropDown,
+                                    contentDescription = null
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expanded = !expanded }
+                        )
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            units.forEach { unit ->
+                                DropdownMenuItem(
+                                    onClick = {
+                                        selectedUnit = unit
+                                        expanded = false
+                                    }
+                                ) {
+                                    Text(text = unit.name)
                                 }
-                            ) {
-                                Text(text = unit.name)
                             }
                         }
                     }
-                }
             }
         },
         confirmButton = {
@@ -620,7 +649,7 @@ fun AddIngredientDialog(
                 viewModel.addIngredient(newIngredient)
                 onAdd(newIngredient)
             }) {
-                Text("Add")
+                Text("Add ingredient")
             }
         },
         dismissButton = {
@@ -634,12 +663,11 @@ fun AddIngredientDialog(
 
 @Composable
 fun AddTagDialog(onAdd: (Tag) -> kotlin.Unit, onDismiss: () -> kotlin.Unit, viewModel: RecipeViewModel) {
-    var tagName by remember { mutableStateOf("") }
+    var tagName by remember { mutableStateOf("name") }
     val showErrorDialog by viewModel.showErrorDialog.observeAsState(false)
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
-        title = { Text("Add Tag") },
         text = {
             Column {
                 OutlinedTextField(
@@ -655,7 +683,7 @@ fun AddTagDialog(onAdd: (Tag) -> kotlin.Unit, onDismiss: () -> kotlin.Unit, view
                 viewModel.addTag(newTag)
                 onAdd(newTag)
             }) {
-                Text("Add")
+                Text("Add tag")
             }
         },
         dismissButton = {

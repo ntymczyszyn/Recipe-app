@@ -154,7 +154,7 @@ fun RecipeListScreen(navController: NavHostController,recipeViewModel: RecipeVie
                             isEditing = true
                         },
                         onDelete = {
-                            recipeViewModel.deleteRecipe(recipeWithDetails.recipe) // TODO : popraw na usuwanie z details recipie
+                            recipeViewModel.deleteRecipe(recipeWithDetails.recipe)
                         }
                     )
                 }

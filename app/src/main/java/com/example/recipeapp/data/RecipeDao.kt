@@ -14,7 +14,7 @@ import com.example.recipeapp.data.entities.*
 interface RecipeDao {
 
     // RECEPIE
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insertRecipe(recipe: Recipe): Long
 
     @Update
@@ -33,7 +33,7 @@ interface RecipeDao {
     fun getRecipeWithDetailsById(recipeId: Int): LiveData<RecipeWithDetails>
 
     // INGREDIENT
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insertIngredient(ingredient: Ingredient): Long
 
     @Update
@@ -43,7 +43,7 @@ interface RecipeDao {
     suspend fun deleteIngredient(ingredient: Ingredient)
 
     // TAG
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insertTag(tag: Tag): Long
 
     @Update
@@ -56,10 +56,10 @@ interface RecipeDao {
     suspend fun getTagById(tagId: Int): Tag?
 
     // CROSS REF
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insertRecipeIngredientCrossRef(ref: RecipeIngredientCrossRef)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insertRecipeTagCrossRef(ref: RecipeTagCrossRef)
 
     @Query("DELETE FROM RecipeIngredientCrossRef WHERE recipeId = :recipeId")
@@ -93,4 +93,6 @@ interface RecipeDao {
 
     @Query("SELECT * FROM Ingredient WHERE name = :name")
     suspend fun getIngredientsByName(name: String): List<Ingredient>
+    @Query("DELETE FROM RecipeIngredientCrossRef WHERE ingredientId = :ingredientId")
+    suspend fun deleteIngredientFromAllRecipes(ingredientId: Int)
 }

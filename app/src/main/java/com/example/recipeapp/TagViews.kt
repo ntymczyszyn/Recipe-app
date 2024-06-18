@@ -5,13 +5,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
+import androidx.compose.material3.Button
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.recipeapp.data.entities.RecipeWithDetails
 import com.example.recipeapp.data.entities.Tag
 import com.example.recipeapp.viewmodel.RecipeViewModel
 
@@ -42,12 +46,16 @@ import com.example.recipeapp.viewmodel.RecipeViewModel
 @OptIn(ExperimentalMaterialApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun AllTagsScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) { // TODO popraw te przucisi na buttony zwykłe i chyba zrób link do itemów ?? jak w recipie view
+fun AllTagsScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) {
     val tags by recipeViewModel.allTags.observeAsState(emptyList())
     var expanded by remember { mutableStateOf(false) }
     var selectedTag by remember { mutableStateOf(Tag()) }
     var showEditTagDialog by remember { mutableStateOf(false) }
+    var showDeleteTagDialog by remember { mutableStateOf(false) }
     val recipesByTag by recipeViewModel.getRecipesForTag(selectedTag).observeAsState(emptyList())
+    var selectedRecipe by remember { mutableStateOf<RecipeWithDetails?>(null) }
+    var isEditing by remember { mutableStateOf(false) }
+    var isDetailView by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = { BottomBar(navController) }
@@ -67,14 +75,15 @@ fun AllTagsScreen(navController: NavHostController, recipeViewModel: RecipeViewM
                         value = selectedTag.name,
                         onValueChange = { },
                         readOnly = true,
-                        label = { Text("Tag") },
+                        label = { Text("Category") },
                         trailingIcon = {
                             Icon(
-                                imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.ArrowDropDown,
+                                imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                 contentDescription = null
                             )
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .clickable { expanded = !expanded }
                     )
                     DropdownMenu(
@@ -86,6 +95,9 @@ fun AllTagsScreen(navController: NavHostController, recipeViewModel: RecipeViewM
                                 onClick = {
                                     selectedTag = tag
                                     expanded = false
+                                    selectedRecipe = null
+                                    isEditing = false
+                                    isDetailView = false
                                 }
                             ) {
                                 Text(text = tag.name)
@@ -94,20 +106,57 @@ fun AllTagsScreen(navController: NavHostController, recipeViewModel: RecipeViewM
                     }
                 }
                 if (selectedTag.name.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        IconButton(onClick = { showEditTagDialog = true }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit Tag")
+                    if (selectedRecipe != null && isEditing) {
+                        EditRecipeScreen(
+                            recipeWithDetails = selectedRecipe!!,
+                            onSave = {
+                                selectedRecipe = null
+                                isEditing = false
+                            },
+                            onCancel = {
+                                selectedRecipe = null
+                                isEditing = false
+                            },
+                            recipeViewModel = recipeViewModel
+                        )
+                    } else if (selectedRecipe != null && isDetailView) {
+                        RecipeDetailScreen(
+                            recipeWithDetails = selectedRecipe!!,
+                            onBack = {
+                                selectedRecipe = null
+                                isDetailView = false
+                            }
+                        )
+                    } else {
+                        Row(
+                            modifier = Modifier.padding(16.dp)
+
+                        ) {
+                            Button(onClick = { showEditTagDialog = true }) {
+                                Text("Edit Tag")
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Button(onClick = { showDeleteTagDialog = true }){
+                                Text("Delete Tag")
+                            }
                         }
-                        IconButton(onClick = { recipeViewModel.deleteTagFromAllRecipes(selectedTag) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Tag") // TODO usuń tag
-                        }
-                    }
-                    LazyColumn (modifier = Modifier.height(200.dp)){
-                        items(recipesByTag) { recipe ->
-                            Text(text = recipe.recipe.title)
+                        LazyColumn(modifier =  Modifier.height(200.dp))  {
+                            items(recipesByTag) { recipeWithDetails ->
+                                RecipeItem(
+                                    recipeWithDetails,
+                                    onClick = {
+                                        selectedRecipe = recipeWithDetails
+                                        isDetailView = true
+                                    },
+                                    onEdit = {
+                                        selectedRecipe = recipeWithDetails
+                                        isEditing = true
+                                    },
+                                    onDelete = {
+                                        recipeViewModel.deleteRecipe(recipeWithDetails.recipe)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -125,7 +174,45 @@ fun AllTagsScreen(navController: NavHostController, recipeViewModel: RecipeViewM
             onDismiss = { showEditTagDialog = false },
         )
     }
+    if (showDeleteTagDialog) {
+        DeleteTagDialog(
+            tag = selectedTag,
+            viewModel = recipeViewModel,
+            onDismiss = { showDeleteTagDialog = false }
+        )
+    }
+
 }
+@Composable
+fun DeleteTagDialog(
+    tag: Tag,
+    viewModel: RecipeViewModel,
+    onDismiss: () -> kotlin.Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text("Delete Tag") },
+        text = {
+            Column {
+                Text("Are you sure you want to delete this tag?")
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                viewModel.deleteTagFromAllRecipes(tag)
+                onDismiss()
+            }) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            Button(onClick = { onDismiss() }) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
 
 @Composable
 fun EditTagDialog(

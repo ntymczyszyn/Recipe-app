@@ -1,7 +1,10 @@
 package com.example.recipeapp
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +22,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
+import androidx.compose.material3.Button
+import androidx.compose.material.Card
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
@@ -31,7 +35,6 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,40 +43,63 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.recipeapp.data.entities.*
 import com.example.recipeapp.data.entities.Unit
+@OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) { // po naisneicu che miec przyciski doe dycki danego tagu
+fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: RecipeViewModel) {
     val ingredients by recipeViewModel.allIngredients.observeAsState(emptyList())
     var showEditIngredientDialog by remember { mutableStateOf(false) }
-    var ingredientToEdit by remember { mutableStateOf(Ingredient()) }
+    var showDeleteIngredientDialog by remember { mutableStateOf(false) }
+    var ingredientToModify by remember { mutableStateOf(Ingredient()) }
 
     Scaffold(
         bottomBar = { BottomBar(navController) }
     ) {
-        LazyColumn (modifier = Modifier.padding(
-            start = 16.dp,
-            top = 16.dp,
-            end = 16.dp,
-            bottom = 70.dp
-        )) {
+        LazyColumn(
+            modifier = Modifier.padding(
+                start = 16.dp,
+                top = 16.dp,
+                end = 16.dp,
+                bottom = 70.dp
+            )
+        ) {
             items(ingredients) { ingredient ->
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                var showButtons by remember { mutableStateOf(false) }
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .combinedClickable(
+                            onClick = { },
+                            onLongClick = { showButtons = !showButtons }
+                        ),
+                    elevation = 4.dp
                 ) {
-                    Text(
-                        text = "${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}",
-                        style = MaterialTheme.typography.body1
-                    )
-                    IconButton(onClick = {
-                        // Wywołaj funkcję edycji składnika
-                        showEditIngredientDialog = true
-                        ingredientToEdit = ingredient
-                    }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit Ingredient")
-                    }
-                    IconButton(onClick = { recipeViewModel.deleteIngredient(ingredient) }) { // TODO: zabezpiecz przed suuwanie
-                        Icon(Icons.Default.Delete, contentDescription = "Delete Ingredient")
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}",
+                            style = MaterialTheme.typography.body1
+                        )
+                        AnimatedVisibility(visible = showButtons) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                IconButton(onClick = {
+                                    showEditIngredientDialog = true
+                                    ingredientToModify = ingredient
+                                }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit Ingredient")
+                                }
+                                IconButton(onClick = {
+                                    showDeleteIngredientDialog = true
+                                    ingredientToModify = ingredient
+                                }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Delete Ingredient")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -82,16 +108,48 @@ fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: Reci
 
     if (showEditIngredientDialog) {
         EditIngredientDialog(
-            ingredient = ingredientToEdit,
+            ingredient = ingredientToModify,
             viewModel = recipeViewModel,
             onEdit = {
                 showEditIngredientDialog = false
             },
-            onDismiss = { showEditIngredientDialog = false },
+            onDismiss = { showEditIngredientDialog = false }
+        )
+    }
+    if (showDeleteIngredientDialog) {
+        DeleteIngredientDialog(
+            ingredient = ingredientToModify,
+            viewModel = recipeViewModel,
+            onDismiss = { showDeleteIngredientDialog = false }
         )
     }
 }
 
+@Composable
+fun DeleteIngredientDialog(
+    ingredient: Ingredient,
+    viewModel: RecipeViewModel,
+    onDismiss: () -> kotlin.Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text("Delete Ingredient") },
+        text = { Text("This action will permanent delete this ingredient form all recipes.") },
+        confirmButton = {
+            Button(onClick = {
+                viewModel.deleteIngredient(ingredient)
+                onDismiss()
+            }) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            Button(onClick = { onDismiss() }) {
+                Text("Cancel")
+            }
+        }
+    )
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
