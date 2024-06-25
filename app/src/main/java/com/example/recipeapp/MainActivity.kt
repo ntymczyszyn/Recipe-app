@@ -74,7 +74,7 @@ fun BottomBar(navController: NavHostController) {
     BottomNavigation(
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp) // Zwiększamy wysokość paska nawigacyjnego
+            .height(70.dp)
     ) {
         BottomNavigationItem(
             icon = { Icon(Icons.Default.List, contentDescription = "Recipe List") },

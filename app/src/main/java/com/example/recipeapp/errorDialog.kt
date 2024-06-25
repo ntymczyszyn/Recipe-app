@@ -10,8 +10,8 @@ fun ShowErrorDialog(showDialog: Boolean, onDismiss: () -> Unit) {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { onDismiss() },
-            title = { Text("Błąd") },
-            text = { Text("Powielenie wartości - o tej nazwie już istnieje.") },
+            title = { Text("Error") },
+            text = { Text("Duplicate value - it already exists in the database.") },
             confirmButton = {
                 Button(onClick = { onDismiss() }) {
                     Text("OK")

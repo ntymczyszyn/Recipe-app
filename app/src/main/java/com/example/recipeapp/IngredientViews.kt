@@ -78,7 +78,7 @@ fun AllIngredientsScreen(navController: NavHostController, recipeViewModel: Reci
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}",
+                            text = "${ingredient.name} - ${ingredient.quantity} ${if (ingredient.unit == Unit.NONE) "" else " ${ingredient.unit}"}",
                             style = MaterialTheme.typography.body1
                         )
                         AnimatedVisibility(visible = showButtons) {

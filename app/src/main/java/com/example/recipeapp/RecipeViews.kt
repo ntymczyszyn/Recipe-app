@@ -149,7 +149,7 @@ fun RecipeDetailScreen(recipeWithDetails: RecipeWithDetails, onBack: () -> kotli
         Spacer(modifier = Modifier.height(8.dp))
         recipeWithDetails.ingredients.forEach { ingredient ->
             Text(
-                text = "${ingredient.name} - ${ingredient.quantity * quantityMultiplier} ${ingredient.unit}",
+                text = "${ingredient.name} - ${ingredient.quantity * quantityMultiplier} ${if (ingredient.unit == Unit.NONE) "" else " ${ingredient.unit}"}",
                 style = MaterialTheme.typography.body2
             )
         }
@@ -257,7 +257,7 @@ fun AddRecipeScreen(navController: NavHostController, recipeViewModel: RecipeVie
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}")
+                                    Text( "${ingredient.name} - ${ingredient.quantity} ${if (ingredient.unit == Unit.NONE) "" else " ${ingredient.unit}"}")
                                     IconButton(
                                         onClick = {
                                             ingredients = ingredients.toMutableList().also { it.removeAt(index) }
@@ -442,7 +442,7 @@ fun EditRecipeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("${ingredient.name} - ${ingredient.quantity} ${ingredient.unit}")
+                    Text( "${ingredient.name} - ${ingredient.quantity} ${if (ingredient.unit == Unit.NONE) "" else " ${ingredient.unit}"}")
                     IconButton(
                         onClick = {
                             ingredients = ingredients.toMutableList().also { it.removeAt(index) }

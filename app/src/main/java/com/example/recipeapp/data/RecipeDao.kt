@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
@@ -13,7 +12,6 @@ import com.example.recipeapp.data.entities.*
 @Dao
 interface RecipeDao {
 
-    // RECEPIE
     @Insert
     suspend fun insertRecipe(recipe: Recipe): Long
 
@@ -23,7 +21,6 @@ interface RecipeDao {
     @Delete
     suspend fun deleteRecipe(recipe: Recipe)
 
-    // RECEPIE WITH DETAILS
     @Transaction
     @Query("SELECT * FROM Recipe")
     fun getAllRecipesWithDetails(): LiveData<List<RecipeWithDetails>>
@@ -31,8 +28,6 @@ interface RecipeDao {
     @Transaction
     @Query("SELECT * FROM Recipe WHERE id = :recipeId")
     fun getRecipeWithDetailsById(recipeId: Int): LiveData<RecipeWithDetails>
-
-    // INGREDIENT
     @Insert
     suspend fun insertIngredient(ingredient: Ingredient): Long
 
@@ -42,7 +37,6 @@ interface RecipeDao {
     @Delete
     suspend fun deleteIngredient(ingredient: Ingredient)
 
-    // TAG
     @Insert
     suspend fun insertTag(tag: Tag): Long
 
@@ -55,7 +49,6 @@ interface RecipeDao {
     @Query("SELECT * FROM Tag WHERE id = :tagId")
     suspend fun getTagById(tagId: Int): Tag?
 
-    // CROSS REF
     @Insert
     suspend fun insertRecipeIngredientCrossRef(ref: RecipeIngredientCrossRef)
 
